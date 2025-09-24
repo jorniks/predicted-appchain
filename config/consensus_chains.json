@@ -1,0 +1,8 @@
+[
+  {
+    "ChainID": 11155111,
+    "DBPath": "/multichain/sepolia",
+    "APIKey": "{YOUR SEPOLIA WSS URL}",
+    "StartBlock": 9214937
+  }
+]
