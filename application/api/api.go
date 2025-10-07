@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/0xAtelerix/sdk/gosdk/rpc"
-	"github.com/holiman/uint256"
 	"github.com/ledgerwatch/erigon-lib/kv"
 
 	"github.com/0xAtelerix/example/application"
@@ -25,79 +24,64 @@ func NewCustomRPC(rpcServer *rpc.StandardRPCServer, db kv.RoDB) *CustomRPC {
 }
 
 func (c *CustomRPC) AddRPCMethods() {
-	c.rpcServer.AddMethod("getBalance", c.GetBalance)
+	c.rpcServer.AddMethod("getEvent", c.GetEvent)
+	c.rpcServer.AddMethod("listEvents", c.ListEvents)
 }
 
-func (c *CustomRPC) GetBalance(ctx context.Context, params []any) (any, error) {
+// ----------------- New: Event RPC handlers -----------------
+
+type GetEventRequest struct {
+	EventID int64 `json:"eventId"`
+}
+
+// GetEvent returns single event by id
+func (c *CustomRPC) GetEvent(ctx context.Context, params []any) (any, error) {
 	if len(params) == 0 {
 		return nil, application.ErrMissingParameters
 	}
 
-	// Convert params[0] directly to balanceReq using json marshal/unmarshal
 	paramBytes, err := json.Marshal(params[0])
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal parameter: %w", err)
 	}
 
-	var balanceReq GetBalanceRequest
-	if unmarshalErr := json.Unmarshal(paramBytes, &balanceReq); unmarshalErr != nil {
-		return nil, fmt.Errorf("invalid parameters: %w", unmarshalErr)
+	var req GetEventRequest
+	if err := json.Unmarshal(paramBytes, &req); err != nil {
+		return nil, fmt.Errorf("invalid parameters: %w", err)
 	}
 
-	// Get balance from database
-	balance, err := c.getBalance(ctx, balanceReq.User, balanceReq.Token)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get balance: %w", err)
-	}
-
-	response := GetBalanceResponse{
-		User:    balanceReq.User,
-		Token:   balanceReq.Token,
-		Balance: balance.String(),
-	}
-
-	return response, nil
-}
-
-func (c *CustomRPC) getBalance(
-	ctx context.Context,
-	user, token string,
-) (*uint256.Int, error) {
 	if c.db == nil {
-		return uint256.NewInt(0), application.ErrDatabaseNotAvailable
+		return nil, application.ErrDatabaseNotAvailable
 	}
 
 	tx, err := c.db.BeginRo(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, fmt.Errorf("begin ro: %w", err)
 	}
 	defer tx.Rollback()
 
-	// Get balance from accounts bucket
-	accountKey := application.AccountKey(user, token)
-
-	balanceData, err := tx.GetOne(application.AccountsBucket, accountKey)
+	ev, err := application.GetEvent(ctx, tx, req.EventID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get balance: %w", err)
+		return nil, err
 	}
-
-	balance := uint256.NewInt(0)
-	if len(balanceData) > 0 {
-		balance.SetBytes(balanceData)
-	}
-
-	return balance, nil
+	return ev, nil
 }
 
-// GetBalanceRequest represents a balance query request
-type GetBalanceRequest struct {
-	User  string `json:"user"`
-	Token string `json:"token"`
-}
+// ListEvents returns all stored events
+func (c *CustomRPC) ListEvents(ctx context.Context, params []any) (any, error) {
+	if c.db == nil {
+		return nil, application.ErrDatabaseNotAvailable
+	}
 
-// GetBalanceResponse represents a balance query response
-type GetBalanceResponse struct {
-	User    string `json:"user"`
-	Token   string `json:"token"`
-	Balance string `json:"balance"`
+	tx, err := c.db.BeginRo(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin ro: %w", err)
+	}
+	defer tx.Rollback()
+
+	events, err := application.ListEvents(ctx, tx)
+	if err != nil {
+		return nil, fmt.Errorf("list events: %w", err)
+	}
+	return events, nil
 }

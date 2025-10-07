@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    pid: "service:pelacli"
+    pid: "container:pelacli"
     image: appchain:latest
     volumes:
       - ./pelacli_data:/consensus_data
@@ -22,7 +22,6 @@ services:
       - --stream-dir=/consensus_data/events
       - --tx-dir=/consensus_data/fetcher/snapshots/42
       - --rpc-port=:8080
-      - --multichain-config=/data/chain_data.json
 
   pelacli:
     container_name: pelacli
@@ -37,7 +36,4 @@ services:
       - --snapshot-dir=/consensus_data
       - --appchain=42=appchain:9090
       - --ask-period=1s
-      - --multichain-dir=/consensus_data/multichain_db
-      - --chains-json=/consensus_chains.json
-      - --ext-txn-config-json=/ext_networks.json
 
