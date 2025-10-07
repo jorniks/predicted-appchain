@@ -15,8 +15,8 @@ func AccountKey(sender string, token string) []byte {
 
 // EventTransaction stores or updates an event in the EventsBucket
 type Transaction[R Receipt] struct {
-	Event Event 					`json:"event"`
-	TxHash string					`json:"hash"`
+	Event  Event  `json:"event"`
+	TxHash string `json:"hash"`
 }
 
 func (e *Transaction[R]) Unmarshal(b []byte) error {
@@ -45,7 +45,7 @@ func (e Transaction[R]) Process(
 	dbTx kv.RwTx,
 ) (res R, txs []apptypes.ExternalTransaction, err error) {
 	// Store the event into EventsBucket
-	if err := PutEvent(nil, dbTx, &e.Event); err != nil {
+	if err := PutEvent(dbTx, &e.Event); err != nil {
 		return e.failedReceipt(err), nil, nil
 	}
 

@@ -2,7 +2,6 @@ package application
 
 import (
 	"github.com/0xAtelerix/sdk/gosdk/apptypes"
-	"github.com/holiman/uint256"
 )
 
 var _ apptypes.Receipt = &Receipt{}
@@ -13,14 +12,6 @@ type Receipt struct {
 	TxnHash      [32]byte                 `json:"tx_hash"`
 	ErrorMessage string                   `json:"error,omitempty"`
 	TxStatus     apptypes.TxReceiptStatus `json:"tx_status"`
-
-	// Additional fields based on txn
-	Sender          string       `json:"sender"`
-	SenderBalance   *uint256.Int `json:"sender_balance"`
-	Receiver        string       `json:"receiver"`
-	ReceiverBalance *uint256.Int `json:"receiver_balance"`
-	Token           string       `json:"token"`
-	Value           uint64       `json:"value"`
 }
 
 func (r Receipt) TxHash() [32]byte {

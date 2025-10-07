@@ -60,7 +60,7 @@ func (c *CustomRPC) GetEvent(ctx context.Context, params []any) (any, error) {
 	}
 	defer tx.Rollback()
 
-	ev, err := application.GetEvent(ctx, tx, req.EventID)
+	ev, err := application.GetEvent(tx, req.EventID)
 	if err != nil {
 		return nil, err
 	}

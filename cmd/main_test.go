@@ -99,8 +99,15 @@ func TestEndToEnd(t *testing.T) {
 
 	// build & send a transaction
 	tx := application.Transaction[application.Receipt]{
-		Sender: "Vasya",
-		Value:  42,
+		Event: application.Event{
+			EventID:          42,
+			EventName:        "The Answer",
+			TargetDate:       "2024-12-31T23:59:59Z",
+			ClosedAt:         "2025-01-01T00:00:00Z",
+			Status:           "open",
+			Options:          []application.EventOption{},
+			ConsensusMetrics: application.ConsensusMetrics{},
+		},
 		TxHash: "deadbeef",
 	}
 

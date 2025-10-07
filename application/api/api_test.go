@@ -5,7 +5,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -52,107 +51,6 @@ func createTempDBWithBalance(t *testing.T, user, token string, balance uint64) k
 	}
 
 	return db
-}
-
-func TestCustomRPC_GetBalance(t *testing.T) {
-	// Create temp DB with balance
-	db := createTempDBWithBalance(t, "alice", "USDT", 1000)
-	defer db.Close()
-
-	ctx := context.Background()
-
-	// Create RPC server and custom RPC
-	rpcServer := rpc.NewStandardRPCServer(nil)
-	customRPC := NewCustomRPC(rpcServer, db)
-	customRPC.AddRPCMethods()
-
-	tests := []struct {
-		name            string
-		params          []any
-		expectedUser    string
-		expectedToken   string
-		expectedBalance string
-		expectError     bool
-	}{
-		{
-			name: "valid balance request",
-			params: []any{
-				map[string]any{
-					"user":  "alice",
-					"token": "USDT",
-				},
-			},
-			expectedUser:    "alice",
-			expectedToken:   "USDT",
-			expectedBalance: "1000",
-			expectError:     false,
-		},
-		{
-			name: "zero balance for non-existent account",
-			params: []any{
-				map[string]any{
-					"user":  "bob",
-					"token": "USDT",
-				},
-			},
-			expectedUser:    "bob",
-			expectedToken:   "USDT",
-			expectedBalance: "0",
-			expectError:     false,
-		},
-		{
-			name:        "missing parameters",
-			params:      []any{},
-			expectError: true,
-		},
-		{
-			name: "invalid parameters format",
-			params: []any{
-				"invalid",
-			},
-			expectError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := customRPC.GetBalance(ctx, tt.params)
-
-			if tt.expectError {
-				if err == nil {
-					t.Error("Expected error but got none")
-				}
-
-				return
-			}
-
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-
-				return
-			}
-
-			// Check result type
-			response, ok := result.(GetBalanceResponse)
-			if !ok {
-				t.Errorf("Expected GetBalanceResponse, got %T", result)
-
-				return
-			}
-
-			if response.User != tt.expectedUser {
-				t.Errorf("Expected user %s, got %s", tt.expectedUser, response.User)
-			}
-
-			if response.Token != tt.expectedToken {
-				t.Errorf("Expected token %s, got %s", tt.expectedToken, response.Token)
-			}
-
-			if response.Balance != tt.expectedBalance {
-				t.Errorf("Expected balance %s, got %s", tt.expectedBalance, response.Balance)
-			}
-		})
-	}
 }
 
 // Integration test: start RPC server, send transaction, get transaction by hash
@@ -213,28 +111,6 @@ func TestDefaultRPC_Integration_SendAndGetTransaction(t *testing.T) {
 	require.Contains(t, respGet, "alice")
 	require.Contains(t, respGet, "USDT")
 	require.Contains(t, respGet, "1234")
-}
-
-func TestCustomRPC_GetBalance_NilDatabase(t *testing.T) {
-	// Test with nil database
-	rpcServer := rpc.NewStandardRPCServer(nil)
-	customRPC := NewCustomRPC(rpcServer, nil)
-
-	params := []any{
-		map[string]any{
-			"user":  "alice",
-			"token": "USDT",
-		},
-	}
-
-	_, err := customRPC.GetBalance(context.Background(), params)
-	if err == nil || !strings.Contains(err.Error(), application.ErrDatabaseNotAvailable.Error()) {
-		t.Errorf(
-			"Expected error containing %q, got %v",
-			application.ErrDatabaseNotAvailable.Error(),
-			err,
-		)
-	}
 }
 
 func TestDefaultRPC_MethodRegistration(t *testing.T) {

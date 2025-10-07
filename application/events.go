@@ -41,7 +41,7 @@ type Event struct {
 
 // PutEvent stores an event into the EventsBucket.
 // key format: "event:<eventId>"
-func PutEvent(ctx context.Context, tx kv.RwTx, e *Event) error {
+func PutEvent(tx kv.RwTx, e *Event) error {
 	data, err := json.Marshal(e)
 	if err != nil {
 		return fmt.Errorf("marshal event: %w", err)
@@ -55,7 +55,7 @@ func PutEvent(ctx context.Context, tx kv.RwTx, e *Event) error {
 }
 
 // GetEvent reads a single event by ID from a read-only tx
-func GetEvent(ctx context.Context, tx kv.Tx, id int64) (*Event, error) {
+func GetEvent(tx kv.Tx, id int64) (*Event, error) {
 	key := []byte(fmt.Sprintf("event:%d", id))
 	data, err := tx.GetOne(EventsBucket, key)
 	if err != nil {
