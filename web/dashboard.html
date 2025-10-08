@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicted Appchain Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Predicted Appchain Dashboard</h1>
+        
+        <div class="section">
+            <h3>📋 List Events</h3>
+            <p>View all stored events in the blockchain</p>
+            <button onclick="listEvents()">Get All Events</button>
+            <div id="listResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔍 Get Specific Event</h3>
+            <div class="input-group">
+                <label for="eventId">Event ID:</label>
+                <input type="number" id="eventId" placeholder="Enter event ID (e.g., 1)" value="1">
+            </div>
+            <button onclick="getEvent()">Get Event</button>
+            <div id="getResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>📤 Send Transaction</h3>
+            <div class="input-group">
+                <label for="eventName">Event Name:</label>
+                <input type="text" id="eventName" placeholder="Enter event name" value="Test Event">
+            </div>
+            <div class="input-group">
+                <label for="eventDesc">Event Description:</label>
+                <input type="text" id="eventDesc" placeholder="Enter description" value="Test event from web interface">
+            </div>
+            <button onclick="sendTransaction()">Send Transaction</button>
+            <div id="sendResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔍 Check Transaction</h3>
+            <div class="input-group">
+                <label for="txHash">Transaction Hash:</label>
+                <input type="text" id="txHash" placeholder="Enter transaction hash" value="0x0000000000000000000000000000000000000000000000000000000000000001">
+            </div>
+            <button onclick="getTransactionStatus()">Get Status</button>
+            <button onclick="getTransactionReceipt()">Get Receipt</button>
+            <div id="txResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/rpc';
+
+        async function callRPC(method, params = []) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: method,
+                        params: params,
+                        id: Date.now()
+                    })
+                });
+
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                return { error: { message: `Network error: ${error.message}` } };
+            }
+        }
+
+        async function listEvents() {
+            const result = await callRPC('listEvents');
+            document.getElementById('listResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function getEvent() {
+            const eventId = parseInt(document.getElementById('eventId').value);
+            const result = await callRPC('getEvent', [{ eventId }]);
+            document.getElementById('getResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function sendTransaction() {
+            const eventName = document.getElementById('eventName').value;
+            const eventDesc = document.getElementById('eventDesc').value;
+            const eventId = Date.now(); // Use timestamp as unique ID
+            
+            const transaction = {
+                event: {
+                    eventId: eventId,
+                    eventName: eventName,
+                    description: eventDesc,
+                    targetDate: new Date(Date.now() + 24*60*60*1000).toISOString(), // Tomorrow
+                    status: "Active",
+                    options: [
+                        { id: 1, name: "Yes", isWinner: false, voteCount: 0 },
+                        { id: 2, name: "No", isWinner: false, voteCount: 0 }
+                    ],
+                    consensusMetrics: {
+                        totalProvers: 0,
+                        participationCount: 0,
+                        participationRate: 0,
+                        winningOptionId: 0,
+                        winningOptionName: "",
+                        consensusRate: 0
+                    }
+                },
+                hash: `0x${eventId.toString(16).padStart(64, '0')}`
+            };
+
+            const result = await callRPC('sendTransaction', [transaction]);
+            document.getElementById('sendResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function getTransactionStatus() {
+            const txHash = document.getElementById('txHash').value;
+            const result = await callRPC('getTransactionStatus', [txHash]);
+            document.getElementById('txResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function getTransactionReceipt() {
+            const txHash = document.getElementById('txHash').value;
+            const result = await callRPC('getTransactionReceipt', [txHash]);
+            document.getElementById('txResult').textContent = JSON.stringify(result, null, 2);
+        }
+
+        // Load events on page load
+        window.onload = function() {
+            listEvents();
+        };
+    </script>
+</body>
+</html>

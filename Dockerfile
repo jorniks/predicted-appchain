@@ -15,4 +15,6 @@ RUN go build -o appchain ./cmd/main.go
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/appchain .
+COPY --from=builder /app/web ./web
+EXPOSE 8080 8081
 ENTRYPOINT ["./appchain"]
