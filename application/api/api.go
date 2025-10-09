@@ -90,6 +90,15 @@ func (c *CustomRPC) ListEvents(ctx context.Context, params []any) (any, error) {
 
 // SyncEvents fetches events from external API and returns sync status
 func (c *CustomRPC) SyncEvents(ctx context.Context, params []any) (any, error) {
+	// Define response structure
+	type SyncResponse struct {
+		Success      bool   `json:"success"`
+		Message      string `json:"message,omitempty"`
+		TotalFromAPI int    `json:"totalFromAPI,omitempty"`
+		TotalSynced  int    `json:"totalSynced,omitempty"`
+		NotSynced    int    `json:"notSynced,omitempty"`
+	}
+
 	// Fetch events from external API
 	resp, err := http.Get("https://predicted-provers.replit.app/api/blockchain/concluded-events")
 	if err != nil {
@@ -137,9 +146,14 @@ func (c *CustomRPC) SyncEvents(ctx context.Context, params []any) (any, error) {
 		}
 	}
 
-	// If no new events to add, return early
+	// If no new events to add, return early with status message
 	if len(newEvents) == 0 {
-		return true, nil
+		return SyncResponse{
+			Success: true,
+			Message: "Events not synced because no new event was detected",
+			TotalFromAPI: len(apiResponse.Events),
+			NotSynced: 0,
+		}, nil
 	}
 
 	// Store new events in a single write transaction
@@ -161,5 +175,11 @@ func (c *CustomRPC) SyncEvents(ctx context.Context, params []any) (any, error) {
 		return false, fmt.Errorf("failed to sync events: %w", err)
 	}
 
-	return true, nil
+	// Return successful sync response with statistics
+	return SyncResponse{
+		Success: true,
+		TotalFromAPI: len(apiResponse.Events),
+		TotalSynced: len(newEvents),
+		NotSynced: len(apiResponse.Events) - len(newEvents),
+	}, nil
 }
