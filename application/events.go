@@ -30,13 +30,13 @@ type ConsensusMetrics struct {
 type Event struct {
 	EventID          int64            `json:"eventId"`
 	EventName        string           `json:"eventName"`
-	Description      *string          `json:"description,omitempty"`
+	Description      string           `json:"description"`
 	TargetDate       string           `json:"targetDate"`
 	ClosedAt         string           `json:"closedAt"`
 	Status           string           `json:"status"`
-	Options          []EventOption    `json:"options"`
+	Options          [2]EventOption   `json:"options"`      // Fixed-size array of 2 options
 	ConsensusMetrics ConsensusMetrics `json:"consensusMetrics"`
-	SourcesOfTruth   interface{}      `json:"sourcesOfTruth,omitempty"`
+	SourcesOfTruth   []string         `json:"sourcesOfTruth"`
 }
 
 // PutEvent stores an event into the EventsBucket.

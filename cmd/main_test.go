@@ -105,7 +105,7 @@ func TestEndToEnd(t *testing.T) {
 			TargetDate:       "2024-12-31T23:59:59Z",
 			ClosedAt:         "2025-01-01T00:00:00Z",
 			Status:           "open",
-			Options:          []application.EventOption{},
+			Options:          [2]application.EventOption{},
 			ConsensusMetrics: application.ConsensusMetrics{},
 		},
 		TxHash: "deadbeef",

@@ -255,11 +255,11 @@ func convertToLocalEvent(remote RemoteEvent, eventID int64) application.Event {
 	return application.Event{
 		EventID:     eventID,
 		EventName:   remote.Name,
-		Description: &remote.Description,
+		Description: remote.Description,
 		TargetDate:  remote.TargetDate,
 		Status:      "Closed", // These are concluded events
 		ClosedAt:    remote.ClosedAt,
-		Options:     options,
+		Options:     [2]application.EventOption{options[0], options[1]},
 		ConsensusMetrics: application.ConsensusMetrics{
 			TotalProvers:       remote.TotalProvers,
 			ParticipationCount: remote.Participation,

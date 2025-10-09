@@ -97,43 +97,39 @@
             <h3>📋 List Events</h3>
             <p>View all stored events in the blockchain</p>
             <button onclick="listEvents()">Get All Events</button>
+            <div id="eventCount" style="margin-top: 10px; font-weight: bold; color: #007bff;"></div>
             <div id="listResult" class="result"></div>
         </div>
 
         <div class="section">
-            <h3>🔍 Get Specific Event</h3>
+            <h3>🔄 Sync Blockchain with Latest Events</h3>
+            <p>Synchronize blockchain with latest events from the API</p>
+            <button onclick="syncBlockchain()" id="syncBtn">Sync Now</button>
+            <div id="syncStatus" style="margin-top: 10px; font-weight: bold;"></div>
+            <div id="syncResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3�🔍 Get Specific Event</h3>
             <div class="input-group">
                 <label for="eventId">Event ID:</label>
-                <input type="number" id="eventId" placeholder="Enter event ID (e.g., 1)" value="1">
+                <input type="number" id="eventId" placeholder="Enter event ID (e.g., 1)" value="">
             </div>
             <button onclick="getEvent()">Get Event</button>
+            <button onclick="clearEventResult()" style="background: #6c757d;">Clear Result</button>
             <div id="getResult" class="result"></div>
         </div>
 
-        <div class="section">
-            <h3>📤 Send Transaction</h3>
-            <div class="input-group">
-                <label for="eventName">Event Name:</label>
-                <input type="text" id="eventName" placeholder="Enter event name" value="Test Event">
-            </div>
-            <div class="input-group">
-                <label for="eventDesc">Event Description:</label>
-                <input type="text" id="eventDesc" placeholder="Enter description" value="Test event from web interface">
-            </div>
-            <button onclick="sendTransaction()">Send Transaction</button>
-            <div id="sendResult" class="result"></div>
-        </div>
-
-        <div class="section">
+        <!-- <div class="section">
             <h3>🔍 Check Transaction</h3>
             <div class="input-group">
                 <label for="txHash">Transaction Hash:</label>
-                <input type="text" id="txHash" placeholder="Enter transaction hash" value="0x0000000000000000000000000000000000000000000000000000000000000001">
+                <input type="text" id="txHash" placeholder="Enter transaction hash" value="">
             </div>
             <button onclick="getTransactionStatus()">Get Status</button>
             <button onclick="getTransactionReceipt()">Get Receipt</button>
             <div id="txResult" class="result"></div>
-        </div>
+        </div> -->
     </div>
 
     <script>
@@ -164,44 +160,71 @@
         async function listEvents() {
             const result = await callRPC('listEvents');
             document.getElementById('listResult').textContent = JSON.stringify(result, null, 2);
+            
+            // Update event count
+            const eventCountDiv = document.getElementById('eventCount');
+            if (result.result && Array.isArray(result.result)) {
+                eventCountDiv.textContent = `Total events: ${result.result.length}`;
+                eventCountDiv.style.color = '#28a745';
+            } else {
+                eventCountDiv.textContent = 'Total events: 0';
+                eventCountDiv.style.color = '#dc3545';
+            }
         }
 
         async function getEvent() {
             const eventId = parseInt(document.getElementById('eventId').value);
+            if (!eventId) {
+                document.getElementById('getResult').textContent = 'Please enter a valid Event ID';
+                return;
+            }
             const result = await callRPC('getEvent', [{ eventId }]);
             document.getElementById('getResult').textContent = JSON.stringify(result, null, 2);
         }
 
-        async function sendTransaction() {
-            const eventName = document.getElementById('eventName').value;
-            const eventDesc = document.getElementById('eventDesc').value;
-            const eventId = Date.now(); // Use timestamp as unique ID
-            
-            const transaction = {
-                event: {
-                    eventId: eventId,
-                    eventName: eventName,
-                    description: eventDesc,
-                    targetDate: new Date(Date.now() + 24*60*60*1000).toISOString(), // Tomorrow
-                    status: "Active",
-                    options: [
-                        { id: 1, name: "Yes", isWinner: false, voteCount: 0 },
-                        { id: 2, name: "No", isWinner: false, voteCount: 0 }
-                    ],
-                    consensusMetrics: {
-                        totalProvers: 0,
-                        participationCount: 0,
-                        participationRate: 0,
-                        winningOptionId: 0,
-                        winningOptionName: "",
-                        consensusRate: 0
-                    }
-                },
-                hash: `0x${eventId.toString(16).padStart(64, '0')}`
-            };
+        function clearEventResult() {
+            document.getElementById('getResult').textContent = '';
+            document.getElementById('eventId').value = '';
+        }
 
-            const result = await callRPC('sendTransaction', [transaction]);
-            document.getElementById('sendResult').textContent = JSON.stringify(result, null, 2);
+        async function syncBlockchain() {
+            const syncBtn = document.getElementById('syncBtn');
+            const syncStatus = document.getElementById('syncStatus');
+            const syncResult = document.getElementById('syncResult');
+            
+            // Disable button during sync
+            syncBtn.disabled = true;
+            syncBtn.textContent = 'Syncing...';
+            
+            try {
+                // Step 1: Call the RPC sync method
+                syncStatus.textContent = '🔄 Initiating sync via RPC...';
+                syncStatus.style.color = '#007bff';
+                
+                const result = await callRPC('syncEvents', []);
+                
+                if (result.error) {
+                    throw new Error(result.error.message || 'Sync failed');
+                }
+                
+                // Step 2: Display sync result
+                syncStatus.textContent = '✅ Sync request completed!';
+                syncStatus.style.color = '#28a745';
+                
+                syncResult.textContent = JSON.stringify(result.result, null, 2);
+                
+                // Refresh events list
+                await listEvents();
+                
+            } catch (error) {
+                syncStatus.textContent = '❌ Sync failed: ' + error.message;
+                syncStatus.style.color = '#dc3545';
+                syncResult.textContent = JSON.stringify({ error: error.message }, null, 2);
+            } finally {
+                // Re-enable button
+                syncBtn.disabled = false;
+                syncBtn.textContent = 'Sync Now';
+            }
         }
 
         async function getTransactionStatus() {
