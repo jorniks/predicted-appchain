@@ -1,0 +1,6 @@
+build:
+  docker:
+    web: Dockerfile
+
+run:
+  web: ./appchain --emitter-port=:9090 --db-path=/data/appchain-db --local-db-path=/data/local-db --stream-dir=/consensus_data/events --tx-dir=/consensus_data/fetcher/snapshots/42 --rpc-port=:$PORT
