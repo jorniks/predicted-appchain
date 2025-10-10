@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"flag"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -235,38 +234,9 @@ func Run(ctx context.Context, args RuntimeArgs, _ chan<- int) {
 	// Add custom RPC methods - Optional
 	api.NewCustomRPC(rpcServer, appchainDB).AddRPCMethods()
 
-	// Start web dashboard server
-	go func() {
-		log.Info().Msg("Starting web dashboard on :8081")
-		if err := startWebServer(); err != nil {
-			log.Error().Err(err).Msg("Web server error")
-		}
-	}()
-
-	log.Info().Msg("Starting RPC server on :" + args.RPCPort)
+	log.Info().Str("port", args.RPCPort).Msg("Starting RPC server")
 
 	if err := rpcServer.StartHTTPServer(ctx, args.RPCPort); err != nil {
 		log.Fatal().Err(err).Msg("Failed to start RPC server")
 	}
-}
-
-func startWebServer() error {
-	// Serve static files from web directory
-	fs := http.FileServer(http.Dir("./web/"))
-	http.Handle("/", fs)
-	
-	// Add CORS headers for API calls
-	http.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		
-		if r.Method == "OPTIONS" {
-			return
-		}
-		
-		http.ServeFile(w, r, "./web/dashboard.html")
-	})
-	
-	return http.ListenAndServe(":8081", nil)
 }
