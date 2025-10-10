@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.4
 FROM golang:1.25-alpine AS builder
 
-RUN apk add --no-cache git gcc musl-dev openssh ca-certificates && update-ca-certificates
+RUN apk add --no-cache git gcc musl-dev ca-certificates && update-ca-certificates
 WORKDIR /app
 
 ENV CGO_ENABLED=1
 
 COPY go.mod go.sum ./
-RUN --mount=type=ssh go mod download
+RUN go mod download
 
 COPY . .
 RUN go build -o appchain ./cmd/main.go
@@ -15,6 +15,5 @@ RUN go build -o appchain ./cmd/main.go
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/appchain .
-COPY --from=builder /app/web ./web
-EXPOSE 8080 8081
+EXPOSE 8080
 ENTRYPOINT ["./appchain"]
