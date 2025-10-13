@@ -11,47 +11,13 @@ import (
 
 	"github.com/0xAtelerix/sdk/gosdk/rpc"
 	"github.com/0xAtelerix/sdk/gosdk/txpool"
-	"github.com/holiman/uint256"
 	"github.com/ledgerwatch/erigon-lib/kv"
 	"github.com/ledgerwatch/erigon-lib/kv/mdbx"
-	"github.com/ledgerwatch/erigon-lib/kv/memdb"
 	mdbxlog "github.com/ledgerwatch/log/v3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/0xAtelerix/example/application"
 )
-
-// createTempDBWithBalance creates a temporary in-memory database with test balance data
-func createTempDBWithBalance(t *testing.T, user, token string, balance uint64) kv.RoDB {
-	t.Helper()
-
-	db := memdb.New("")
-	ctx := context.Background()
-
-	// Create tables
-	tx, err := db.BeginRw(ctx)
-	if err != nil {
-		t.Fatalf("Failed to begin transaction: %v", err)
-	}
-
-	// Create the accounts bucket/table
-	if err := tx.CreateBucket(application.AccountsBucket); err != nil {
-		t.Fatalf("Failed to create accounts bucket: %v", err)
-	}
-
-	accountKey := application.AccountKey(user, token)
-
-	balanceValue := uint256.NewInt(balance)
-	if err := tx.Put(application.AccountsBucket, accountKey, balanceValue.Bytes()); err != nil {
-		t.Fatalf("Failed to set test balance: %v", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		t.Fatalf("Failed to commit transaction: %v", err)
-	}
-
-	return db
-}
 
 // Integration test: start RPC server, send transaction, get transaction by hash
 func TestDefaultRPC_Integration_SendAndGetTransaction(t *testing.T) {

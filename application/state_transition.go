@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/holiman/uint256"
 	"github.com/ledgerwatch/erigon-lib/kv"
 	"github.com/rs/zerolog/log"
 )
@@ -124,50 +123,15 @@ func (*StateTransition) processReceipt(
 
 				// Extract user address from topics[1] (indexed parameter)
 				userAddr := common.HexToAddress(vlog.Topics[1].Hex())
-				user := userAddr.Hex()
 
-				// Convert to uint256 for storage
-				amountUint256, overflow := uint256.FromBig(amount)
-				if overflow {
-					log.Error().Str("amount", amount.String()).Msg("Deposit amount too large")
-
-					continue
-				}
-
-				// Update user balance in appchain
-				accountKey := AccountKey(user, token)
-
-				// Get current balance
-				currentBalanceData, err := tx.GetOne(AccountsBucket, accountKey)
-				if err != nil {
-					log.Error().Err(err).Msg("Failed to get current balance")
-
-					continue
-				}
-
-				currentBalance := uint256.NewInt(0)
-				if len(currentBalanceData) > 0 {
-					currentBalance.SetBytes(currentBalanceData)
-				}
-
-				// Add deposited amount
-				newBalance := uint256.NewInt(0).Add(currentBalance, amountUint256)
-
-				// Store new balance
-				balanceBytes := newBalance.Bytes()
-				if err := tx.Put(AccountsBucket, accountKey, balanceBytes); err != nil {
-					log.Error().Err(err).Msg("Failed to update balance")
-
-					continue
-				}
-
+				// Previously this branch updated in-app balances.
+				// For an event-only appchain we skip writing account balances.
 				log.Info().
 					Uint64("chainID", chainID).
 					Str("user", userAddr.Hex()).
 					Str("token", token).
 					Str("amount", amount.String()).
-					Str("new_balance", newBalance.String()).
-					Msg("Processed deposit from external chain")
+					Msg("Deposit from external chain detected - balance update disabled in this build")
 
 			case SwapEventSignature:
 				// Decode swap event using ABI

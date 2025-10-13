@@ -9,10 +9,6 @@ import (
 	"github.com/ledgerwatch/erigon-lib/kv"
 )
 
-func AccountKey(sender string, token string) []byte {
-	return []byte(token + sender)
-}
-
 // EventTransaction stores or updates an event in the EventsBucket
 type Transaction[R Receipt] struct {
 	Event  Event  `json:"event"`

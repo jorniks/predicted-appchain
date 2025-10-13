@@ -7,8 +7,6 @@ func (e Error) Error() string {
 }
 
 const (
-	ErrNotEnoughBalance     = Error("sender's balance not enough")
-	ErrDatabaseNil          = Error("database is nil")
 	ErrMissingParameters    = Error("missing parameters")
 	ErrDatabaseNotAvailable = Error("database not available")
 )
