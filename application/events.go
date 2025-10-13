@@ -10,10 +10,11 @@ import (
 
 // EventOption represents a single option for an event
 type EventOption struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	IsWinner  bool   `json:"isWinner"`
-	VoteCount int64  `json:"voteCount"`
+	ID             int64   `json:"id"`
+	Name           string  `json:"name"`
+	IsWinner       bool    `json:"isWinner"`
+	VoteCount      int     `json:"voteCount"`
+	VotePercentage float64 `json:"votePercentage"`
 }
 
 // ConsensusMetrics describes consensus-related info for an event
@@ -23,20 +24,54 @@ type ConsensusMetrics struct {
 	ParticipationRate  float64 `json:"participationRate"`
 	WinningOptionId    int64   `json:"winningOptionId"`
 	WinningOptionName  string  `json:"winningOptionName"`
+	WinningOptionVotes int     `json:"winningOptionVotes"`
 	ConsensusRate      float64 `json:"consensusRate"`
 }
 
-// Event is the structure matching the JSON returned by the Replit API
+// TimingInfo contains time-related information about an event
+type TimingInfo struct {
+	TargetDate                    string `json:"targetDate"`
+	ClosedAt                      string `json:"closedAt"`
+	DurationMinutes              int    `json:"durationMinutes"`
+	AverageResponseTimeSeconds   int    `json:"averageResponseTimeSeconds"`
+}
+
+// RewardsInfo contains reward-related information
+type RewardsInfo struct {
+	TotalDistributed float64 `json:"totalDistributed"`
+	CorrectProvers   int     `json:"correctProvers"`
+}
+
+// ProvenanceInfo contains information about the truth source
+type ProvenanceInfo struct {
+	SourcesOfTruth    []string `json:"sourcesOfTruth"`
+	SourceType        string   `json:"sourceType"`
+	OriginalSourceUrl string   `json:"originalSourceUrl,omitempty"`
+}
+
+// VerificationInfo contains cryptographic verification details
+type VerificationInfo struct {
+	Signature     string `json:"signature"`
+	SignerAddress string `json:"signerAddress"`
+	MessageHash   string `json:"messageHash"`
+	SignedAt      string `json:"signedAt"`
+	Algorithm     string `json:"algorithm"`
+	Standard      string `json:"standard"`
+}
+
+// Event is the structure matching the JSON returned by the API
 type Event struct {
+	APIVersion       string           `json:"apiVersion"`
 	EventID          int64            `json:"eventId"`
 	EventName        string           `json:"eventName"`
 	Description      string           `json:"description"`
-	TargetDate       string           `json:"targetDate"`
-	ClosedAt         string           `json:"closedAt"`
 	Status           string           `json:"status"`
-	Options          [2]EventOption   `json:"options"`      // Fixed-size array of 2 options
-	ConsensusMetrics ConsensusMetrics `json:"consensusMetrics"`
-	SourcesOfTruth   []string         `json:"sourcesOfTruth"`
+	Timing           TimingInfo       `json:"timing"`
+	Options          [2]EventOption   `json:"options"`
+	Consensus        ConsensusMetrics `json:"consensus"`
+	Rewards          RewardsInfo      `json:"rewards"`
+	Provenance       ProvenanceInfo   `json:"provenance"`
+	Verification     VerificationInfo `json:"verification"`
 }
 
 // PutEvent stores an event into the EventsBucket.

@@ -36,19 +36,55 @@ type EventTransaction struct {
 	TxHash string            `json:"hash"`
 }
 
+// RemoteEventOption represents the option structure from the API
+type RemoteEventOption struct {
+	ID             int64   `json:"id"`
+	Name           string  `json:"name"`
+	IsWinner       bool    `json:"isWinner"`
+	VoteCount      int     `json:"voteCount"`
+	VotePercentage float64 `json:"votePercentage"`
+}
+
 // RemoteEvent represents the structure of events from the remote API
 type RemoteEvent struct {
-	ID                string        `json:"id"`
-	Name              string        `json:"name"`
-	Description       string        `json:"description"`
-	Options           []interface{} `json:"options"`
-	WinningOption     string        `json:"winningOption"`
-	TotalProvers      int           `json:"totalProvers"`
-	Participation     int           `json:"participation"`
-	ParticipationRate float64       `json:"participationRate"`
-	ConsensusRate     float64       `json:"consensusRate"`
-	TargetDate        string        `json:"targetDate"`
-	ClosedAt          string        `json:"closedAt"`
+	APIVersion  string `json:"apiVersion"`
+	EventID     int64  `json:"eventId"`
+	EventName   string `json:"eventName"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status"`
+	Timing struct {
+		TargetDate                  string `json:"targetDate"`
+		ClosedAt                    string `json:"closedAt"`
+		DurationMinutes            int    `json:"durationMinutes"`
+		AverageResponseTimeSeconds int    `json:"averageResponseTimeSeconds"`
+	} `json:"timing"`
+	Options []RemoteEventOption `json:"options"`
+	Consensus struct {
+		TotalProvers       int     `json:"totalProvers"`
+		ParticipationCount int     `json:"participationCount"`
+		ParticipationRate  float64 `json:"participationRate"`
+		WinningOptionId    int64   `json:"winningOptionId"`
+		WinningOptionName  string  `json:"winningOptionName"`
+		WinningOptionVotes int     `json:"winningOptionVotes"`
+		ConsensusRate      float64 `json:"consensusRate"`
+	} `json:"consensus"`
+	Rewards struct {
+		TotalDistributed float64 `json:"totalDistributed"`
+		CorrectProvers   int `json:"correctProvers"`
+	} `json:"rewards"`
+	Provenance struct {
+		SourcesOfTruth    []string `json:"sourcesOfTruth"`
+		SourceType        string   `json:"sourceType"`
+		OriginalSourceUrl string   `json:"originalSourceUrl,omitempty"`
+	} `json:"provenance"`
+	Verification struct {
+		Signature     string `json:"signature"`
+		SignerAddress string `json:"signerAddress"`
+		MessageHash   string `json:"messageHash"`
+		SignedAt      string `json:"signedAt"`
+		Algorithm     string `json:"algorithm"`
+		Standard      string `json:"standard"`
+	} `json:"verification"`
 }
 
 const (
@@ -229,44 +265,60 @@ func fetchRemoteEvents() []RemoteEvent {
 }
 
 func convertToLocalEvent(remote RemoteEvent, eventID int64) application.Event {
-	// Create options slice
-	options := make([]application.EventOption, 0, len(remote.Options))
-	var winningOptionID int64
-	optionID := int64(1)
-
-	for _, opt := range remote.Options {
-		optStr, ok := opt.(string)
-		if !ok {
-			continue // Skip if not a string
-		}
-		isWinner := optStr == remote.WinningOption
-		if isWinner {
-			winningOptionID = optionID
-		}
-		options = append(options, application.EventOption{
-			ID:        optionID,
-			Name:      optStr,
-			IsWinner:  isWinner,
-			VoteCount: 0, // We don't have this information from the remote API
-		})
-		optionID++
-	}
-
+	// Convert the API response to our local Event structure
 	return application.Event{
-		EventID:     eventID,
-		EventName:   remote.Name,
+		APIVersion: remote.APIVersion,
+		EventID:    remote.EventID,
+		EventName:  remote.EventName,
 		Description: remote.Description,
-		TargetDate:  remote.TargetDate,
-		Status:      "Closed", // These are concluded events
-		ClosedAt:    remote.ClosedAt,
-		Options:     [2]application.EventOption{options[0], options[1]},
-		ConsensusMetrics: application.ConsensusMetrics{
-			TotalProvers:       remote.TotalProvers,
-			ParticipationCount: remote.Participation,
-			ParticipationRate:  remote.ParticipationRate,
-			WinningOptionId:    winningOptionID,
-			WinningOptionName:  remote.WinningOption,
-			ConsensusRate:      remote.ConsensusRate,
+		Status:     remote.Status,
+		Timing: application.TimingInfo{
+			TargetDate:                  remote.Timing.TargetDate,
+			ClosedAt:                    remote.Timing.ClosedAt,
+			DurationMinutes:             remote.Timing.DurationMinutes,
+			AverageResponseTimeSeconds:  remote.Timing.AverageResponseTimeSeconds,
+		},
+		Options: [2]application.EventOption{
+			{
+				ID:             remote.Options[0].ID,
+				Name:           remote.Options[0].Name,
+				IsWinner:       remote.Options[0].IsWinner,
+				VoteCount:      remote.Options[0].VoteCount,
+				VotePercentage: remote.Options[0].VotePercentage,
+			},
+			{
+				ID:             remote.Options[1].ID,
+				Name:           remote.Options[1].Name,
+				IsWinner:       remote.Options[1].IsWinner,
+				VoteCount:      remote.Options[1].VoteCount,
+				VotePercentage: remote.Options[1].VotePercentage,
+			},
+		},
+		Consensus: application.ConsensusMetrics{
+			TotalProvers:       remote.Consensus.TotalProvers,
+			ParticipationCount: remote.Consensus.ParticipationCount,
+			ParticipationRate:  remote.Consensus.ParticipationRate,
+			WinningOptionId:    remote.Consensus.WinningOptionId,
+			WinningOptionName:  remote.Consensus.WinningOptionName,
+			WinningOptionVotes: remote.Consensus.WinningOptionVotes,
+			ConsensusRate:      remote.Consensus.ConsensusRate,
+		},
+		Rewards: application.RewardsInfo{
+			TotalDistributed: remote.Rewards.TotalDistributed,
+			CorrectProvers:   remote.Rewards.CorrectProvers,
+		},
+		Provenance: application.ProvenanceInfo{
+			SourcesOfTruth:    remote.Provenance.SourcesOfTruth,
+			SourceType:        remote.Provenance.SourceType,
+			OriginalSourceUrl: remote.Provenance.OriginalSourceUrl,
+		},
+		Verification: application.VerificationInfo{
+			Signature:     remote.Verification.Signature,
+			SignerAddress: remote.Verification.SignerAddress,
+			MessageHash:   remote.Verification.MessageHash,
+			SignedAt:      remote.Verification.SignedAt,
+			Algorithm:     remote.Verification.Algorithm,
+			Standard:      remote.Verification.Standard,
 		},
 	}
 }

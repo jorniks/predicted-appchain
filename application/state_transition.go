@@ -223,6 +223,9 @@ func createTokenMintPayload(recipient common.Address, amount *big.Int, token str
 }
 
 // decodeDepositEvent decodes a Deposit event using ABI
+// Event decoding is not needed since we're getting events directly from the API
+// These functions are kept as examples for future use with blockchain events
+
 func decodeDepositEvent(vlog *types.Log) (string, *big.Int, error) {
 	// Parse the ABI
 	parsedABI, err := abi.JSON(strings.NewReader(depositEventABI))

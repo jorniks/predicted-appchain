@@ -16,4 +16,4 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/appchain .
 EXPOSE 8080
-ENTRYPOINT ["./appchain"]
+ENTRYPOINT ["./appchain", "-rpc-port", ":8545", "-db-path", "/data/appchain.mdbx", "-local-db-path", "/data/local.mdbx"]

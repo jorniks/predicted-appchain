@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/0xAtelerix/sdk/gosdk/rpc"
@@ -108,18 +109,38 @@ func (c *CustomRPC) SyncEvents(ctx context.Context, params []any) (any, error) {
 
 	// Parse response structure matching the exact API response format
 	var apiResponse struct {
-		Success bool              `json:"success"`
-		Count   int              `json:"count"`
+		Success bool                `json:"success"`
+		Count   int                `json:"count"`
 		Events  []*application.Event `json:"events"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
-		return false, fmt.Errorf("failed to decode response: %w", err)
+		// If there's a decode error, try to read raw response for debugging
+		body, _ := io.ReadAll(resp.Body)
+		return false, fmt.Errorf("failed to decode response: %w\nRaw response: %s", err, string(body))
 	}
 
 	if !apiResponse.Success {
 		return false, fmt.Errorf("API returned failure status")
 	}
+
+	// Verify all events have required fields
+	for i, event := range apiResponse.Events {
+		if event == nil {
+			return false, fmt.Errorf("event at index %d is nil", i)
+		}
+		if event.APIVersion == "" {
+			return false, fmt.Errorf("event %d missing API version", i)
+		}
+		if event.EventID == 0 {
+			return false, fmt.Errorf("event %d missing EventID", i)
+		}
+		if len(event.Options) != 2 {
+			return false, fmt.Errorf("event %d has %d options, expected 2", i, len(event.Options))
+		}
+	}
+
+	events := apiResponse.Events
 
 	// Get existing event IDs to avoid duplicates
 	tx, err := c.db.BeginRo(ctx)
@@ -140,7 +161,7 @@ func (c *CustomRPC) SyncEvents(ctx context.Context, params []any) (any, error) {
 
 	// Filter out duplicates
 	var newEvents []*application.Event
-	for _, event := range apiResponse.Events {
+	for _, event := range events {
 		if !existingEventIDs[event.EventID] {
 			newEvents = append(newEvents, event)
 		}
@@ -151,7 +172,7 @@ func (c *CustomRPC) SyncEvents(ctx context.Context, params []any) (any, error) {
 		return SyncResponse{
 			Success: true,
 			Message: "Events not synced because no new event was detected",
-			TotalFromAPI: len(apiResponse.Events),
+			TotalFromAPI: len(events),
 			NotSynced: 0,
 		}, nil
 	}
@@ -178,8 +199,8 @@ func (c *CustomRPC) SyncEvents(ctx context.Context, params []any) (any, error) {
 	// Return successful sync response with statistics
 	return SyncResponse{
 		Success: true,
-		TotalFromAPI: len(apiResponse.Events),
+		TotalFromAPI: len(events),
 		TotalSynced: len(newEvents),
-		NotSynced: len(apiResponse.Events) - len(newEvents),
+		NotSynced: len(events) - len(newEvents),
 	}, nil
 }

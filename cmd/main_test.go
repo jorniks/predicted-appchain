@@ -100,13 +100,42 @@ func TestEndToEnd(t *testing.T) {
 	// build & send a transaction
 	tx := application.Transaction[application.Receipt]{
 		Event: application.Event{
-			EventID:          42,
-			EventName:        "The Answer",
-			TargetDate:       "2024-12-31T23:59:59Z",
-			ClosedAt:         "2025-01-01T00:00:00Z",
-			Status:           "open",
-			Options:          [2]application.EventOption{},
-			ConsensusMetrics: application.ConsensusMetrics{},
+			APIVersion: "2.0",
+			EventID:    42,
+			EventName:  "The Answer",
+			Status:     "open",
+			Timing: application.TimingInfo{
+				TargetDate: "2024-12-31T23:59:59Z",
+				ClosedAt:   "2025-01-01T00:00:00Z",
+			},
+			Options: [2]application.EventOption{
+				{
+					ID:             1,
+					Name:           "Yes",
+					IsWinner:       false,
+					VoteCount:      0,
+					VotePercentage: 0,
+				},
+				{
+					ID:             2,
+					Name:           "No",
+					IsWinner:       false,
+					VoteCount:      0,
+					VotePercentage: 0,
+				},
+			},
+			Consensus: application.ConsensusMetrics{},
+			Rewards: application.RewardsInfo{
+				TotalDistributed: 0,
+				CorrectProvers:   0,
+			},
+			Provenance: application.ProvenanceInfo{
+				SourceType: "test",
+			},
+			Verification: application.VerificationInfo{
+				Algorithm: "ECDSA",
+				Standard: "EIP-191",
+			},
 		},
 		TxHash: "deadbeef",
 	}
