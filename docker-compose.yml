@@ -6,10 +6,11 @@ services:
     pid: "container:pelacli"
     image: appchain:latest
     volumes:
-      - ./pelacli_data:/consensus_data
-      - ./app_data:/data
+      - ~/appchain_data/pelacli_data:/consensus_data
+      - ~/appchain_data/app_data:/data
+      - ~/appchain_data/config/chain_data.json:/data/chain_data.json:ro
+      - ~/appchain_data/multichain:/multichain
       - ./config/chain_data.json:/data/chain_data.json:ro
-      - ./multichain:/multichain
     ports:
       - "9090:9090"
       - "8080:8080"
