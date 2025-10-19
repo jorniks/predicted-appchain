@@ -1,4 +1,16 @@
 services:
+  replit-sync:
+    build:
+      context: .
+      dockerfile: Dockerfile.sync
+    environment:
+      - DATA_DIR=/data
+      - SYNC_INTERVAL=60s
+    volumes:
+      - ./app_data:/data
+    depends_on:
+      - appchain
+
   appchain:
     build:
       context: .
@@ -6,23 +18,29 @@ services:
     pid: "container:pelacli"
     image: appchain:latest
     volumes:
-      - ~/appchain_data/pelacli_data:/consensus_data
-      - ~/appchain_data/app_data:/data
-      - ~/appchain_data/config/chain_data.json:/data/chain_data.json:ro
-      - ~/appchain_data/multichain:/multichain
+      - ./pelacli_data:/consensus_data
+      - ./app_data:/data
       - ./config/chain_data.json:/data/chain_data.json:ro
+      - ./multichain:/multichain
     ports:
       - "9090:9090"
       - "8080:8080"
     depends_on:
       - pelacli
     command:
-      - --emitter-port=:9090
-      - --db-path=/data/appchain-db
-      - --local-db-path=/data/local-db
-      - --stream-dir=/consensus_data/events
-      - --tx-dir=/consensus_data/fetcher/snapshots/42
-      - --rpc-port=:8080
+      - ./appchain
+      - --emitter-port
+      - :9090
+      - --db-path
+      - /data/appchain-db
+      - --local-db-path
+      - /data/local-db
+      - --stream-dir
+      - /consensus_data/events
+      - --tx-dir
+      - /consensus_data/fetcher/snapshots/42
+      - --rpc-port
+      - :8080
 
   pelacli:
     container_name: pelacli
@@ -37,4 +55,3 @@ services:
       - --snapshot-dir=/consensus_data
       - --appchain=42=appchain:9090
       - --ask-period=1s
-
