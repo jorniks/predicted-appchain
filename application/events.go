@@ -46,10 +46,10 @@ type RewardsInfo struct {
 type ProvenanceInfo struct {
 	SourcesOfTruth    []string `json:"sourcesOfTruth"`
 	SourceType        string   `json:"sourceType"`
-	OriginalSourceUrl string   `json:"originalSourceUrl"`
-	UmaAssertionId    string   `json:"umaAssertionId"`
-	PlatformId        string   `json:"platformId"`
-	MarketId          string   `json:"marketId"`
+	OriginalSourceUrl *string  `json:"originalSourceUrl"`
+	UmaAssertionId    *int64   `json:"umaAssertionId"`
+	PlatformId        *string  `json:"platformId"`
+	MarketId          *string  `json:"marketId"`
 }
 
 // VerificationInfo contains cryptographic verification details
@@ -64,17 +64,17 @@ type VerificationInfo struct {
 
 // Event is the structure matching the JSON returned by the API
 type Event struct {
-	APIVersion       string           `json:"apiVersion"`
-	EventID          int64            `json:"eventId"`
-	EventName        string           `json:"eventName"`
-	Description      string           `json:"description"`
-	Status           string           `json:"status"`
-	Timing           TimingInfo       `json:"timing"`
-	Options          [2]EventOption   `json:"options"`
-	Consensus        ConsensusMetrics `json:"consensus"`
-	Rewards          RewardsInfo      `json:"rewards"`
-	Provenance       ProvenanceInfo   `json:"provenance"`
-	Verification     VerificationInfo `json:"verification"`
+	APIVersion       string            `json:"apiVersion"`
+	EventID          int64             `json:"eventId"`
+	EventName        string            `json:"eventName"`
+	Description      string            `json:"description"`
+	Status           string            `json:"status"`
+	Timing           TimingInfo        `json:"timing"`
+	Options          [2]EventOption    `json:"options"`
+	Consensus        ConsensusMetrics  `json:"consensus"`
+	Rewards          RewardsInfo       `json:"rewards"`
+	Provenance       ProvenanceInfo    `json:"provenance"`
+	Verification     *VerificationInfo `json:"verification"`
 }
 
 // PutEvent stores an event into the EventsBucket.
