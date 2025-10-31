@@ -46,7 +46,10 @@ type RewardsInfo struct {
 type ProvenanceInfo struct {
 	SourcesOfTruth    []string `json:"sourcesOfTruth"`
 	SourceType        string   `json:"sourceType"`
-	OriginalSourceUrl string   `json:"originalSourceUrl,omitempty"`
+	OriginalSourceUrl string   `json:"originalSourceUrl"`
+	UmaAssertionId    string   `json:"umaAssertionId"`
+	PlatformId        string   `json:"platformId"`
+	MarketId          string   `json:"marketId"`
 }
 
 // VerificationInfo contains cryptographic verification details
