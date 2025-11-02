@@ -310,9 +310,9 @@ func convertToLocalEvent(remote RemoteEvent, eventID int64) application.Event {
 		Provenance: application.ProvenanceInfo{
 			SourcesOfTruth:    remote.Provenance.SourcesOfTruth,
 			SourceType:        remote.Provenance.SourceType,
-			OriginalSourceUrl: remote.Provenance.OriginalSourceUrl,
+			OriginalSourceUrl: &remote.Provenance.OriginalSourceUrl,
 		},
-		Verification: application.VerificationInfo{
+		Verification: &application.VerificationInfo{
 			Signature:     remote.Verification.Signature,
 			SignerAddress: remote.Verification.SignerAddress,
 			MessageHash:   remote.Verification.MessageHash,

@@ -132,7 +132,7 @@ func TestEndToEnd(t *testing.T) {
 			Provenance: application.ProvenanceInfo{
 				SourceType: "test",
 			},
-			Verification: application.VerificationInfo{
+			Verification: &application.VerificationInfo{
 				Algorithm: "ECDSA",
 				Standard: "EIP-191",
 			},
